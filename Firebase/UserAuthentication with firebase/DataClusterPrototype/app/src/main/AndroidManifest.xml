@@ -10,8 +10,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DataClusterPrototype">
-<!--        <activity android:name=".views.HomeActivity"/>-->
-        <activity android:name=".views.HomeActivity">
+        <activity android:name=".views.HomeActivity"/>
+        <activity android:name=".views.SigninActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

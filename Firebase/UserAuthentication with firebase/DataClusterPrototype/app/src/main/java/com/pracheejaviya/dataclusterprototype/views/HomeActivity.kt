@@ -1,24 +1,39 @@
 package com.pracheejaviya.dataclusterprototype.views
 
 import android.os.Bundle
-import android.text.Layout
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pracheejaviya.dataclusterprototype.R
+import com.pracheejaviya.dataclusterprototype.extensions.logV
 import kotlinx.android.synthetic.main.activity_home.*
-import kotlinx.android.synthetic.main.fragment_home.*
+
 
 class HomeActivity : AppCompatActivity() {
+    private val db = FirebaseFirestore.getInstance()
     lateinit var currentFragment: Fragment
+    var currentuserUID = FirebaseAuth.getInstance().currentUser!!.uid
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
         setUpFragment()
+        logV(currentuserUID+"USER IDDDDDDEEEEEEEEEEEEEEEEEEEEE TEHEHEHEHHE :D")
+        uploadUID(currentuserUID)
 
-
+    }
+    private fun uploadUID(userID: String)
+    {
+        val id = hashMapOf(
+            "USER ID" to userID
+        )
+        db.collection("users").document(currentuserUID)
+            .set(id)
+            .addOnSuccessListener { logV("SUCCESSFULLLLLLLLLLLLLLLLLLLLLLLLLLLL") }
+            .addOnFailureListener { e -> Log.w("Error writing document", e) }
     }
 
     private fun setUpFragment() {
