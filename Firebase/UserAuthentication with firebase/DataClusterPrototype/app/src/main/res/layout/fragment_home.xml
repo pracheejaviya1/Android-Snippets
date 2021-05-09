@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <ImageView
         android:id="@+id/navbarMenu"
         android:layout_width="wrap_content"
@@ -10,8 +11,8 @@
         android:layout_marginTop="20dp"
         android:layout_marginEnd="20dp"
         android:src="@drawable/ic_round_menu_24"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
     </ImageView>
 
@@ -22,16 +23,36 @@
         android:text="Successful signin"
         android:textColor="@android:color/black"
         android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/btnSignOut"
+        app:layout_constraintBottom_toTopOf="@+id/btnCamera"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/navbarMenu" />
 
     <Button
+        android:id="@+id/btnCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Camera"
+        app:layout_constraintBottom_toTopOf="@id/btnGallery"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView" />
+
+    <Button
+        android:id="@+id/btnGallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Gallery"
+        app:layout_constraintBottom_toTopOf="@id/btnSignOut"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnCamera" />
+
+    <Button
         android:id="@+id/btnSignOut"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Go back"
+        android:text="SignOut"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

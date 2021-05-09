@@ -32,6 +32,15 @@ class HomeFragment : Fragment() {
             }
         }
 
+        btnCamera.setOnClickListener {(setupFragment(NewReadingFragment.newInstance()))}
+
+    }
+
+    private fun setupFragment(fragment: Fragment) {
+        val transaction = parentFragmentManager.beginTransaction()
+        transaction.replace(R.id.newHomeContainer, fragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
     }
     companion object {
         fun newInstance() = HomeFragment()

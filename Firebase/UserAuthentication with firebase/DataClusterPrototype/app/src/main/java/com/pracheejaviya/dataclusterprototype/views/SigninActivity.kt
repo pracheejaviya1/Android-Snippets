@@ -5,7 +5,7 @@ import com.pracheejaviya.dataclusterprototype.R
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.EditText
-import com.pracheejaviya.dataclusterprototype.extensions.Extensions.toast
+import com.pracheejaviya.dataclusterprototype.extensions.toast
 import com.pracheejaviya.dataclusterprototype.utils.FirebaseUtils.firebaseAuth
 import kotlinx.android.synthetic.main.activity_signin.*
 
