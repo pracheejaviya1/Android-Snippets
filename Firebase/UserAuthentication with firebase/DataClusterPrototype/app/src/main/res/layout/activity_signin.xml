@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     tools:context=".views.SigninActivity"
     tools:ignore="Autofill, LabelFor">
 
@@ -21,7 +22,6 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-
     <EditText
         android:id="@+id/etSignInEmail"
         android:layout_width="0dp"
@@ -31,6 +31,8 @@
         android:hint="Email id"
         android:inputType="textEmailAddress"
         android:padding="10dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/etSignInPassword"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,6 +47,8 @@
         android:hint="Password"
         android:inputType="textPassword"
         android:padding="10dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
         app:layout_constraintEnd_toEndOf="@+id/etSignInEmail"
         app:layout_constraintStart_toStartOf="@+id/etSignInEmail"
@@ -61,7 +65,6 @@
         app:layout_constraintEnd_toEndOf="@+id/etSignInPassword"
         app:layout_constraintStart_toStartOf="@+id/etSignInPassword"
         app:layout_constraintTop_toBottomOf="@+id/etSignInPassword" />
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

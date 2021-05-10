@@ -7,10 +7,10 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.media.Image
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -20,22 +20,24 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import com.pracheejaviya.dataclusterprototype.R
 import com.pracheejaviya.dataclusterprototype.extensions.logV
 import com.pracheejaviya.dataclusterprototype.extensions.makeGone
 import com.pracheejaviya.dataclusterprototype.extensions.makeVisible
+import com.pracheejaviya.dataclusterprototype.extensions.toast
 import kotlinx.android.synthetic.main.fragment_new_reading.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileNotFoundException
+import java.net.URI
 
 @RequiresApi(Build.VERSION_CODES.N)
 
@@ -43,10 +45,10 @@ class NewReadingFragment : Fragment() {
     private var imageCapture: ImageCapture? = null
     private lateinit var preview: Preview
     private lateinit var camera: Camera
-    private val uriArrayList: MutableList<Uri> = mutableListOf()
     private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
 
 
+    var storageRef: StorageReference = FirebaseStorage.getInstance().reference
     private val db = FirebaseFirestore.getInstance()
     var currentuserUID = FirebaseAuth.getInstance().currentUser!!.uid
     val taskID1 = "PRRDYA984C"
@@ -161,24 +163,27 @@ class NewReadingFragment : Fragment() {
                     }
                     lifecycleScope.launch {
                         withContext(Dispatchers.IO) {
-                            val imageName = "IMG" + System.currentTimeMillis() + ".jpg"
+                            val imageName = "IMG_" + System.currentTimeMillis() + ".jpeg"
+                            val path =
+                                rotatedBitmap?.let { getURI(requireContext(), it, imageName) }
                             val bytes = ByteArrayOutputStream()
                             rotatedBitmap?.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-                            val path = rotatedBitmap?.let { getUri(requireContext()) }
-                            logV(path)
-                            val id = hashMapOf(
-                                "image_name" to imageName
-                            )
-                            db.collection("tasks").document(taskID1).collection(currentuserUID)
-                                .document("Check1")
-                                .set(id)
-                                .addOnSuccessListener { logV("Successful") }
-                                .addOnFailureListener { e -> Log.w("Error writing document", e) }
+                            val taskImages =
+                                storageRef.child("tasks/$taskID1/$currentuserUID/$imageName")
+                            taskImages.putFile(path!!)
+                                .addOnSuccessListener { taskSnapshot ->
+                                    taskSnapshot.storage.downloadUrl.addOnSuccessListener {
+                                        it.toString()
+                                        toast("Image Uploaded")
+                                        imagePreview.makeGone()
+                                        cancelCapture.makeGone()
+                                        capturedImage.makeGone()
+                                    }
+                                }
                         }
                     }
                     image.close()
                 }
-
                 override fun onError(exception: ImageCaptureException) {
                     val errorType = exception.imageCaptureError
                     logV(exception.localizedMessage)
@@ -210,9 +215,18 @@ class NewReadingFragment : Fragment() {
         return rotatedImage
     }
 
-    private fun getUri(context: Context): String {
 
-        return context.filesDir.toString()
+    private fun getURI(context: Context, bitmap: Bitmap, imageName: String): Uri {
+        val bytes = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+        val path = MediaStore.Images.Media.insertImage(
+            context.contentResolver,
+            bitmap,
+            imageName,
+            null
+        )
+        // bitmap.recycle()
+        return Uri.parse(path)
     }
 
     companion object {
