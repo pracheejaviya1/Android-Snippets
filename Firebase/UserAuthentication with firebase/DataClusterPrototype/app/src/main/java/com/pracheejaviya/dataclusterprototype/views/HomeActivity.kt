@@ -29,12 +29,12 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun init() {
-        uploadUID(currentuserUID)
-        uploadTasks()
+     //   uploadUID(currentuserUID)
+     //   uploadTasks()
     }
 
 
-    //UID be added everytime the user logs in. Change to unique - check later
+    //UID be added everytime the user logs in. This function will be called when a user creates an account
     private fun uploadUID(userID: String) {
         val id = hashMapOf(
             "USER ID" to userID

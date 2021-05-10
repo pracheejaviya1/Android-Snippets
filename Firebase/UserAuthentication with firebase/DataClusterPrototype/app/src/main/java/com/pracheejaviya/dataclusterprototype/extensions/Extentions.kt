@@ -30,11 +30,11 @@ fun Fragment.toast(message: String) {
     Toast.makeText(this.requireContext(), message, Toast.LENGTH_SHORT).show()
 }
 
-fun getUri(context: Context, bitmap: Bitmap): Uri? {
+fun getUri(context: Context?, bitmap: Bitmap): Uri? {
     val bytes = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
     val path = MediaStore.Images.Media.insertImage(
-        context.contentResolver,
+        context?.contentResolver,
         bitmap,
         "IMG_" + System.currentTimeMillis(),
         null

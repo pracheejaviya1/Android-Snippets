@@ -6,19 +6,23 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import androidx.lifecycle.lifecycleScope
-
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pracheejaviya.dataclusterprototype.R
 import com.pracheejaviya.dataclusterprototype.extensions.getUri
 import com.pracheejaviya.dataclusterprototype.extensions.logV
@@ -30,15 +34,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileNotFoundException
 
+@RequiresApi(Build.VERSION_CODES.N)
 
 class NewReadingFragment : Fragment() {
     private var imageCapture: ImageCapture? = null
-    private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
-    private val uriArrayList: MutableList<Uri> = mutableListOf()
-
     private lateinit var preview: Preview
     private lateinit var camera: Camera
+    private val uriArrayList: MutableList<Uri> = mutableListOf()
+    private var lensFacing = CameraSelector.DEFAULT_BACK_CAMERA
+
+
+    private val db = FirebaseFirestore.getInstance()
+    var currentuserUID = FirebaseAuth.getInstance().currentUser!!.uid
+    val taskID1 = "PRRDYA984C"
 
 
     override fun onCreateView(
@@ -73,12 +83,16 @@ class NewReadingFragment : Fragment() {
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(
-                arrayOf<String>(REQUIRED_PERMISSIONS[0]), 1)
+                arrayOf(REQUIRED_PERMISSIONS[0]), 101
+            )
         }
     }
 
     private fun checkPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(requireContext(), REQUIRED_PERMISSIONS[0]) == PackageManager.PERMISSION_GRANTED
+        return ActivityCompat.checkSelfPermission(
+            requireContext(),
+            REQUIRED_PERMISSIONS[0]
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun init() {
@@ -115,9 +129,10 @@ class NewReadingFragment : Fragment() {
 
                 // Bind use cases to camera
                 camera = cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture)
+                    this, cameraSelector, preview, imageCapture
+                )
 
-            } catch(exc: Exception) {
+            } catch (exc: Exception) {
                 Log.e(ContentValues.TAG, "Use case binding failed", exc)
             }
 
@@ -127,57 +142,59 @@ class NewReadingFragment : Fragment() {
     private fun takePhoto() {
 
         val imageCapture = imageCapture ?: return
-
         cancelCapture.makeVisible()
         capturedImage.makeVisible()
 
         imageCapture.takePicture(ContextCompat.getMainExecutor(context),object : ImageCapture.OnImageCapturedCallback() {
-
             override fun onCaptureSuccess(image: ImageProxy) {
-                capturedImage.setOnClickListener{
-//                    val buffer = image.planes[0].buffer
-//                    val bytes = ByteArray(buffer.capacity()).also { buffer.get(it) }
-//                    lifecycleScope.launch {
-//                        withContext(Dispatchers.IO) {
-//
-//                            val rotatedBitmap = rotateBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
-//                            val uri = rotatedBitmap?.let { getUri(requireContext(), it) }
-//                            uri?.let { uriArrayList.add(it) }
-//                            withContext(Dispatchers.Main) {
-//                                logV("captured")
-//                            }
-////                            val file = File("uri")
-////                            try {
-////                                val stream = ByteArrayOutputStream()
-////                                rotatedBitmap?.compress(Bitmap.CompressFormat.PNG, 100, stream)
-////                                val byteArray: ByteArray = stream.toByteArray()
-////                                rotatedBitmap?.recycle()
-////                                file.writeBytes(byteArray)
-////                            } catch (e: java.io.FileNotFoundException) {
-////                                logV("File not found")
-////                            }
-//                        }
-//                    }
-//                    image.close()
-                }
-            }
-            override fun onError(exception: ImageCaptureException) {
-                val errorType = exception.imageCaptureError
-                logV(exception.localizedMessage)
-            }
-        })
+                val buffer = image.planes[0].buffer
+                val bytes = ByteArray(buffer.capacity()).also { buffer.get(it) }
+                val rotatedBitmap = rotateBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
 
-        cancelCapture.setOnClickListener{
+                imagePreview.makeVisible()
+                imagePreview.apply {
+                        setImageBitmap(rotatedBitmap)
+                        logV("IMAGE SET")
+
+                }
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        val uri = rotatedBitmap?.let { getUri(context, it) }
+                        uri?.let { uriArrayList.add(it) }
+                    }
+                }
+                image.close()
+            }
+                override fun onError(exception: ImageCaptureException) {
+                    val errorType = exception.imageCaptureError
+                    logV(exception.localizedMessage)
+                }
+            })
+
+        cancelCapture.setOnClickListener {
+            imagePreview.makeGone()
             cancelCapture.makeGone()
             capturedImage.makeGone()
             startCamera()
         }
     }
 
+    private fun rotateBitmap(decodeByteArray: Bitmap?): Bitmap? {
+        val width = decodeByteArray?.width
+        val height = decodeByteArray?.height
 
-
-
-
+        val matrix = Matrix()
+        if (lensFacing == CameraSelector.DEFAULT_FRONT_CAMERA) {
+            matrix.postRotate(90f)
+            matrix.preScale(-1f,1f)
+        }
+        else {
+            matrix.postRotate(90f)
+        }
+        val rotatedImage = Bitmap.createBitmap(decodeByteArray!!, 0, 0, width!!, height!!, matrix, true)
+        decodeByteArray.recycle()
+        return rotatedImage
+    }
     companion object {
         fun newInstance() = NewReadingFragment()
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
