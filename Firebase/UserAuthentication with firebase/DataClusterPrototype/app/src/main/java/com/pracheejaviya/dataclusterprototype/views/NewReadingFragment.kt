@@ -2,10 +2,12 @@ package com.pracheejaviya.dataclusterprototype.views
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.media.Image
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,7 +26,6 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pracheejaviya.dataclusterprototype.R
-import com.pracheejaviya.dataclusterprototype.extensions.getUri
 import com.pracheejaviya.dataclusterprototype.extensions.logV
 import com.pracheejaviya.dataclusterprototype.extensions.makeGone
 import com.pracheejaviya.dataclusterprototype.extensions.makeVisible
@@ -145,26 +146,39 @@ class NewReadingFragment : Fragment() {
         cancelCapture.makeVisible()
         capturedImage.makeVisible()
 
-        imageCapture.takePicture(ContextCompat.getMainExecutor(context),object : ImageCapture.OnImageCapturedCallback() {
-            override fun onCaptureSuccess(image: ImageProxy) {
-                val buffer = image.planes[0].buffer
-                val bytes = ByteArray(buffer.capacity()).also { buffer.get(it) }
-                val rotatedBitmap = rotateBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+        imageCapture.takePicture(ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    val buffer = image.planes[0].buffer
+                    val bytes = ByteArray(buffer.capacity()).also { buffer.get(it) }
+                    val rotatedBitmap =
+                        rotateBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
 
-                imagePreview.makeVisible()
-                imagePreview.apply {
+                    imagePreview.makeVisible()
+                    imagePreview.apply {
                         setImageBitmap(rotatedBitmap)
                         logV("IMAGE SET")
-
-                }
-                lifecycleScope.launch {
-                    withContext(Dispatchers.IO) {
-                        val uri = rotatedBitmap?.let { getUri(context, it) }
-                        uri?.let { uriArrayList.add(it) }
                     }
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            val imageName = "IMG" + System.currentTimeMillis() + ".jpg"
+                            val bytes = ByteArrayOutputStream()
+                            rotatedBitmap?.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+                            val path = rotatedBitmap?.let { getUri(requireContext()) }
+                            logV(path)
+                            val id = hashMapOf(
+                                "image_name" to imageName
+                            )
+                            db.collection("tasks").document(taskID1).collection(currentuserUID)
+                                .document("Check1")
+                                .set(id)
+                                .addOnSuccessListener { logV("Successful") }
+                                .addOnFailureListener { e -> Log.w("Error writing document", e) }
+                        }
+                    }
+                    image.close()
                 }
-                image.close()
-            }
+
                 override fun onError(exception: ImageCaptureException) {
                     val errorType = exception.imageCaptureError
                     logV(exception.localizedMessage)
@@ -186,15 +200,21 @@ class NewReadingFragment : Fragment() {
         val matrix = Matrix()
         if (lensFacing == CameraSelector.DEFAULT_FRONT_CAMERA) {
             matrix.postRotate(90f)
-            matrix.preScale(-1f,1f)
-        }
-        else {
+            matrix.preScale(-1f, 1f)
+        } else {
             matrix.postRotate(90f)
         }
-        val rotatedImage = Bitmap.createBitmap(decodeByteArray!!, 0, 0, width!!, height!!, matrix, true)
+        val rotatedImage =
+            Bitmap.createBitmap(decodeByteArray!!, 0, 0, width!!, height!!, matrix, true)
         decodeByteArray.recycle()
         return rotatedImage
     }
+
+    private fun getUri(context: Context): String {
+
+        return context.filesDir.toString()
+    }
+
     companion object {
         fun newInstance() = NewReadingFragment()
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)

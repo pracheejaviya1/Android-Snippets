@@ -23,7 +23,7 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
         setUpFragment()
-        logV(currentuserUID + "USER IDDDDDDEEEEEEEEEEEEEEEEEEEEE TEHEHEHEHHE :D")
+        logV(currentuserUID + "USER IDDDDDDEEEEEEEEEEEEEEEEEEEEE")
         init()
 
     }
