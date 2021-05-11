@@ -22,6 +22,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -37,7 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.net.URI
+
 
 @RequiresApi(Build.VERSION_CODES.N)
 
@@ -161,29 +163,54 @@ class NewReadingFragment : Fragment() {
                         setImageBitmap(rotatedBitmap)
                         logV("IMAGE SET")
                     }
-                    lifecycleScope.launch {
-                        withContext(Dispatchers.IO) {
-                            val imageName = "IMG_" + System.currentTimeMillis() + ".jpeg"
-                            val path =
-                                rotatedBitmap?.let { getURI(requireContext(), it, imageName) }
-                            val bytes = ByteArrayOutputStream()
-                            rotatedBitmap?.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-                            val taskImages =
-                                storageRef.child("tasks/$taskID1/$currentuserUID/$imageName")
-                            taskImages.putFile(path!!)
-                                .addOnSuccessListener { taskSnapshot ->
-                                    taskSnapshot.storage.downloadUrl.addOnSuccessListener {
-                                        it.toString()
-                                        toast("Image Uploaded")
+
+                    capturedImage.setOnClickListener {
+
+                        lifecycleScope.launch {
+                            withContext(Dispatchers.IO) {
+                                val imageName = "IMG_" + System.currentTimeMillis() + ".jpeg"
+                                val path =
+                                    rotatedBitmap?.let { getURI(requireContext(), it, imageName) }
+                                val path1 = context?.filesDir.toString() + "/$imageName"
+                                val stream = ByteArrayOutputStream()
+                                rotatedBitmap?.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                                val toBytes = stream.size()
+                                lateinit var url: String
+
+                                val taskImages =
+                                    storageRef.child("tasks/$taskID1/$currentuserUID/$imageName")
+                                taskImages.putFile(path!!)
+                                    .addOnSuccessListener { toast("File uploaded") }
+                                    .addOnCompleteListener { task ->
+                                        if (task.isSuccessful) {
+                                            val downloadUri = task.result
+                                            //URL
+                                            url = downloadUri!!.toString()
+                                            logV("$url STORAGE URL")
+                                        }
+
+                                        val usersData = hashMapOf(
+                                            "data_file_size" to toBytes,
+                                            "data_path_on_phone" to path1,
+                                            "task_id" to taskID1,
+                                            "user_uid" to currentuserUID,
+                                            "data_path_storage" to url,
+                                        )
+                                        db.collection("Users_data").document()
+                                            .set(usersData).addOnSuccessListener {
+                                                toast("Successfully uploaded values")
+                                            }
                                         imagePreview.makeGone()
                                         cancelCapture.makeGone()
                                         capturedImage.makeGone()
                                     }
-                                }
+                            }
                         }
                     }
+
                     image.close()
                 }
+
                 override fun onError(exception: ImageCaptureException) {
                     val errorType = exception.imageCaptureError
                     logV(exception.localizedMessage)

@@ -1,5 +1,7 @@
 package com.pracheejaviya.dataclusterprototype.views
 
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -13,7 +15,6 @@ import com.pracheejaviya.dataclusterprototype.R
 import com.pracheejaviya.dataclusterprototype.extensions.logV
 import kotlinx.android.synthetic.main.activity_home.*
 
-@RequiresApi(Build.VERSION_CODES.N)
 class HomeActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     lateinit var currentFragment: Fragment
@@ -29,8 +30,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun init() {
-     //   uploadUID(currentuserUID)
-     //   uploadTasks()
+        uploadUID(currentuserUID)
     }
 
 
@@ -39,40 +39,13 @@ class HomeActivity : AppCompatActivity() {
         val id = hashMapOf(
             "USER ID" to userID
         )
-        db.collection("users").document(currentuserUID)
+        db.collection("Users").document(currentuserUID)
             .set(id)
             .addOnSuccessListener { logV("SUCCESSFULLLLLLLLLLLLLLLLLLLLLLLLLLLL") }
             .addOnFailureListener { e -> Log.w("Error writing document", e) }
     }
 
-    private fun randomNumberGenerator(): String {
-        val source = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        var random = java.util.Random().ints(10, 0, source.length)
-            .toArray()
-            .map(source::get)
-            .joinToString("")
-        return random;
-    }
 
-    private fun uploadTasks() {
-        val task1 = randomNumberGenerator()
-        val task2 = randomNumberGenerator()
-
-        //redundancy just for the sake of prototype
-        val id = hashMapOf(
-            "Title" to "Vehicles",
-            "Points" to 1234
-        )
-        db.collection("tasks").document(task1)
-            .set(id)
-            .addOnSuccessListener { logV("Successful") }
-            .addOnFailureListener { e -> Log.w("Error writing document", e) }
-
-        db.collection("tasks").document(task2)
-            .set(id)
-            .addOnSuccessListener { logV("Successful") }
-            .addOnFailureListener { e -> Log.w("Error writing document", e) }
-    }
 
     private fun setUpFragment() {
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
@@ -81,5 +54,7 @@ class HomeActivity : AppCompatActivity() {
         fragmentTransaction.commit()
         currentFragment = Fragment()
     }
+
+
 
 }
